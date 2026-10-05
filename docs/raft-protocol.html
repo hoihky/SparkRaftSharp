@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Raft protocol guide · SparkRaftSharp</title>
+  <meta name="description" content="Raft consensus library for .NET clustered applications.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/portfolio.css">
+  <link rel="stylesheet" href="assets/css/sparkraft-docs.css">
+  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <a href="index.html" class="brand">SparkRaftSharp</a>
+      <nav class="topbar-nav" aria-label="Primary">
+        <a href="index.html">Overview</a>
+        <a href="quickstart.html">Quickstart</a>
+        <a href="raft-protocol.html">Raft guide</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="features.html">Features</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="simple-cluster.html">Demo</a>
+      </nav>
+    </header>
+
+    <main class="portfolio-layout">
+      <div class="portfolio-main doc-body">
+        <header class="doc-header">
+          <h1>Raft protocol guide</h1>
+        </header>
+        <p>This page explains how Raft works as a consensus protocol and how SparkRaftSharp maps each idea to types and services in the library. The goal is to help you reason about failures, leadership changes, and where your application code plugs in.</p>
+<h2 id="why-clusters-need-consensus">Why clusters need consensus</h2>
+<p>A replicated service keeps several copies of the same data so it can survive machine loss. The hard part is agreeing on <strong>one ordered history of changes</strong> when messages are delayed, duplicated, or nodes crash. Consensus picks a single serial history that every correct node eventually applies.</p>
+<p>Raft solves that problem by electing a <strong>leader</strong> for stretches of time. The leader is the only node that may accept new commands from clients. It appends commands to a replicated <strong>log</strong>; followers copy that log. Once a command sits on a majority of nodes, it is <strong>committed</strong> and can be applied to your application state.</p>
+<h2 id="roles-and-terms">Roles and terms</h2>
+<p>Each node is a <strong>follower</strong>, <strong>candidate</strong>, or <strong>leader</strong>.</p>
+<table class="table">
+<thead>
+<tr>
+<th>Role</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Follower</td>
+<td>Replies to the leader; does not accept client writes. Starts an election if the leader goes quiet too long.</td>
+</tr>
+<tr>
+<td>Candidate</td>
+<td>Requests votes after an election timeout. Becomes leader if it wins a quorum.</td>
+</tr>
+<tr>
+<td>Leader</td>
+<td>Accepts proposals, appends to its log, and pushes entries to followers.</td>
+</tr>
+</tbody>
+</table>
+<p>Time is divided into <strong>terms</strong>—monotonic integers. At most one leader per term. When a node hears about a newer term, it refreshes its view and steps down if it was leading.</p>
+<p>In SparkRaftSharp:</p>
+<ul>
+<li><code>RaftRole</code> models the three roles.</li>
+<li><code>RaftTerm</code> is a typed wrapper for the term counter.</li>
+<li><code>PersistentState.CurrentTerm</code> and <code>RaftNodeStatus</code> expose term and role to hosts.</li>
+</ul>
+<h2 id="the-replicated-log">The replicated log</h2>
+<p>The log is an array of entries. Each entry has an <strong>index</strong> (1-based in this library), the <strong>term</strong> when it was created, and an opaque <strong>payload</strong> (<code>byte[]</code>) for your app.</p>
+<p>Raft never forks committed history: if two entries share an index, they share the same term. Leaders only append; conflicting suffixes on followers are deleted before new entries are copied in.</p>
+<p>SparkRaftSharp types:</p>
+<ul>
+<li><code>RaftEntry</code> — index, term, data.</li>
+<li><code>LogIndex</code> — avoids mixing indices with other numbers.</li>
+<li><code>ILogStore</code> — append, read, truncate suffix; implementations include <code>InMemoryLogStore</code> and <code>FileLogStore</code>.</li>
+</ul>
+<h2 id="election-flow">Election flow</h2>
+<p>When a follower’s election timer fires, it increments its term, votes for itself, and sends <strong>RequestVote</strong> RPCs to peers. A peer grants at most one vote per term and only if the candidate’s log is at least as up-to-date as its own (compare last term, then last index).</p>
+<p>If the candidate receives votes from a <strong>quorum</strong> (<code>ClusterConfiguration.QuorumSize</code>), it becomes leader, initializes per-follower progress counters, and begins heartbeats.</p>
+<p>Implementation mapping:</p>
+<ul>
+<li><code>ElectionService</code> — starts elections, handles vote requests and responses.</li>
+<li><code>ElectionTimeout</code> in <code>RaftOptions</code> plus <code>IElectionTimeoutJitter</code> / <code>RandomElectionTimeoutJitter</code> — spreads timeouts to reduce split votes.</li>
+<li><code>RequestVoteRequest</code> / <code>RequestVoteResponse</code> — wire messages; your <code>IRaftTransport</code> delivers them.</li>
+</ul>
+<h2 id="heartbeats-and-appendentries">Heartbeats and AppendEntries</h2>
+<p>The leader sends <strong>AppendEntries</strong> RPCs often (even with zero new entries) so followers reset their election timers. Each RPC carries:</p>
+<ul>
+<li>the leader’s term and id;</li>
+<li><strong>prev log index / term</strong> — consistency check point;</li>
+<li>zero or more new entries;</li>
+<li><strong>leader commit index</strong> — hint for followers to advance their commit pointer.</li>
+</ul>
+<p>If the follower’s log disagrees at the previous point, it rejects the RPC. The leader then walks backward on that follower’s <code>nextIndex</code> until logs align.</p>
+<p>SparkRaftSharp:</p>
+<ul>
+<li><code>AppendEntriesService</code> — follower-side validation, append, commit hint.</li>
+<li><code>ReplicationService</code> — leader-side replication and snapshot fallback.</li>
+<li><code>AppendEntriesRequest</code> / <code>AppendEntriesResponse</code> — message DTOs.</li>
+<li>Leader state: <code>NextIndex</code> and <code>MatchIndex</code> dictionaries on <code>RaftRuntime</code>.</li>
+</ul>
+<h2 id="commitment-and-application">Commitment and application</h2>
+<p>An entry is <strong>committed</strong> once the leader knows it is stored on a majority of servers for its current term. The leader updates <code>commitIndex</code>; followers learn it through AppendEntries. Nodes apply entries in order where <code>lastApplied &lt; commitIndex</code>, calling your state machine.</p>
+<p>Client proposals in this library complete when the entry is <strong>committed</strong> (not necessarily after every follower has applied).</p>
+<p>Components:</p>
+<ul>
+<li><code>LogCommitService.TryAdvanceCommitIndex</code> — quorum check on the leader.</li>
+<li><code>LogCommitService.ApplyCommittedAsync</code> — drives <code>IRaftStateMachine.ApplyAsync</code>.</li>
+<li><code>IRaftNode.ProposeAsync</code> — leader-only; queues <code>ProposeEvent</code> on the engine channel.</li>
+<li><code>NotLeaderException</code> — thrown on followers; includes <code>KnownLeader</code> when known for client redirect.</li>
+</ul>
+<h2 id="persistent-vs-volatile-state">Persistent vs volatile state</h2>
+<table class="table">
+<thead>
+<tr>
+<th>State</th>
+<th>Examples</th>
+<th>SparkRaftSharp</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Persistent</td>
+<td>current term, votedFor, log entries, snapshot metadata</td>
+<td><code>IStateStore</code>, <code>ILogStore</code>, optional <code>ISnapshotStore</code></td>
+</tr>
+<tr>
+<td>Volatile</td>
+<td>commit index, last applied, leader id, match/next indices</td>
+<td>fields on <code>RaftRuntime</code>, rebuilt on leadership</td>
+</tr>
+</tbody>
+</table>
+<p>On startup, <code>RaftEngine</code> loads <code>IStateStore</code> and replays apply for any committed-but-not-applied entries.</p>
+<h2 id="snapshots">Snapshots</h2>
+<p>Long logs are compacted by writing a <strong>snapshot</strong> that captures state up to index <em>N</em>. Followers far behind can receive <strong>InstallSnapshot</strong> instead of a long chain of AppendEntries.</p>
+<p>SparkRaftSharp provides:</p>
+<ul>
+<li><code>RaftSnapshot</code>, <code>ISnapshotStore</code>, <code>InMemorySnapshotStore</code>.</li>
+<li><code>InstallSnapshotRequest</code> / <code>InstallSnapshotResponse</code>.</li>
+<li><code>InstallSnapshotService</code> on followers; leader sends snapshots when <code>ReplicationService</code> detects a follower is before the latest snapshot.</li>
+<li><code>IRaftStateMachine.ApplySnapshotAsync</code> — rebuild local state from snapshot bytes.</li>
+</ul>
+<p>Full automatic compaction on the leader is still evolving; hosts can populate <code>ISnapshotStore</code> for lagging peers.</p>
+<h2 id="engine-architecture">Engine architecture</h2>
+<p>All consensus mutations run on a <strong>single event loop</strong> inside <code>RaftEngine</code>:</p>
+<ol>
+<li>Transport callbacks enqueue <code>InboundMessageEvent</code>.</li>
+<li>Timers enqueue election or heartbeat ticks.</li>
+<li><code>ProposeAsync</code> enqueues <code>ProposeEvent</code>.</li>
+</ol>
+<p>This design avoids fine-grained locking on role and log mutations. Services (<code>ElectionService</code>, <code>AppendEntriesService</code>, <code>ReplicationService</code>, <code>LogCommitService</code>, <code>InstallSnapshotService</code>) share a <code>RaftRuntime</code> bag and are orchestrated from <code>DispatchAsync</code>.</p>
+<p>Public surface:</p>
+<ul>
+<li><code>RaftNodeBuilder</code> — wires cluster config, stores, transport, state machine, options.</li>
+<li><code>IRaftNode</code> — <code>StartAsync</code>, <code>ProposeAsync</code>, <code>ResignLeadershipAsync</code>, <code>GetStatus</code>.</li>
+<li><code>IRaftObserver</code> — optional role, leader, and commit notifications.</li>
+</ul>
+<h2 id="safety-properties-informal">Safety properties (informal)</h2>
+<p>These are the guarantees Raft is built for; SparkRaftSharp follows the same rules:</p>
+<ol>
+<li><strong>Election safety</strong> — at most one leader per term.</li>
+<li><strong>Leader append-only</strong> — leaders never delete or overwrite their own log tail; they only append.</li>
+<li><strong>Log matching</strong> — if two logs contain an entry with the same index and term, they are identical up to that index.</li>
+<li><strong>Leader completeness</strong> — a committed entry appears in every future leader’s log for that term.</li>
+<li><strong>State machine safety</strong> — if a node applies an entry at index <em>i</em>, no other node applies a different entry at <em>i</em>.</li>
+</ol>
+<p>Violations usually mean a bug, clock misuse, or a transport that delivers stale RPCs without term checks—handlers always compare the RPC term with <code>CurrentTerm</code> first.</p>
+<h2 id="operating-a-host-application">Operating a host application</h2>
+<p>Typical integration steps:</p>
+<ol>
+<li>Define static membership (<code>ClusterConfiguration</code> + <code>RaftPeer</code> addresses your transport understands).</li>
+<li>Implement <code>IRaftTransport</code> (TCP sample in SimpleCluster, in-process for tests).</li>
+<li>Implement <code>IRaftStateMachine</code> for business logic on committed bytes.</li>
+<li>Choose stores (<code>InMemory*</code> for tests, <code>File*</code> for durability experiments).</li>
+<li>Start nodes, wait for a leader, call <code>ProposeAsync</code> on the leader (or follow <code>NotLeaderException.KnownLeader</code>).</li>
+</ol>
+<p>Tune <code>RaftOptions.ElectionTimeoutMin/Max</code> and <code>HeartbeatInterval</code> for your network latency. Heartbeats must be noticeably shorter than election timeouts.</p>
+<h2 id="rpc-summary">RPC summary</h2>
+<table class="table">
+<thead>
+<tr>
+<th>Message</th>
+<th>Direction</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RequestVote</td>
+<td>candidate → peer</td>
+<td>ask for vote in current term</td>
+</tr>
+<tr>
+<td>RequestVoteResponse</td>
+<td>peer → candidate</td>
+<td>grant or deny</td>
+</tr>
+<tr>
+<td>AppendEntries</td>
+<td>leader → follower</td>
+<td>replicate log + heartbeat</td>
+</tr>
+<tr>
+<td>AppendEntriesResponse</td>
+<td>follower → leader</td>
+<td>success + match index</td>
+</tr>
+<tr>
+<td>InstallSnapshot</td>
+<td>leader → follower</td>
+<td>ship compacted state</td>
+</tr>
+<tr>
+<td>InstallSnapshotResponse</td>
+<td>follower → leader</td>
+<td>acknowledge install</td>
+</tr>
+</tbody>
+</table>
+<p>All implement <code>IRaftMessage</code> with a <code>RaftMessageKind</code> discriminator for routing in your transport codec.</p>
+<h2 id="further-reading-in-this-repo">Further reading in this repo</h2>
+<ul>
+<li><a href="architecture.html">Architecture</a> — layering and dependency direction.</li>
+<li><a href="quickstart.html">Quickstart</a> — minimal wiring example.</li>
+<li><a href="simple-cluster.html">SimpleCluster demo</a> — TCP transport and client API.</li>
+</ul>
+
+        <footer class="doc-footer">
+          <p>SparkRaftSharp documentation — generated with MDWeb.</p>
+        </footer>
+      </div>
+
+      
+            <aside class="toc" aria-label="On this page">
+              <p class="toc-title">On this page</p>
+              <ul>
+                
+                    <li class="toc-h2">
+                      <a href="#why-clusters-need-consensus">Why clusters need consensus</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#roles-and-terms">Roles and terms</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#the-replicated-log">The replicated log</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#election-flow">Election flow</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#heartbeats-and-appendentries">Heartbeats and AppendEntries</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#commitment-and-application">Commitment and application</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#persistent-vs-volatile-state">Persistent vs volatile state</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#snapshots">Snapshots</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#engine-architecture">Engine architecture</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#safety-properties-informal">Safety properties (informal)</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#operating-a-host-application">Operating a host application</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#rpc-summary">RPC summary</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#further-reading-in-this-repo">Further reading in this repo</a>
+                    </li>
+                    
+              </ul>
+            </aside>
+            
+    </main>
+  </div>
+  <script src="assets/vendor/mermaid.min.js"></script>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

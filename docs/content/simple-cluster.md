@@ -1,6 +1,6 @@
 ---
 title: SimpleCluster demo
-order: 5
+order: 6
 ---
 
 Runs a **3-node Raft cluster** on one machine with TCP Raft RPC and a small client API per node.

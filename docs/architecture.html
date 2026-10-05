@@ -19,6 +19,7 @@
       <nav class="topbar-nav" aria-label="Primary">
         <a href="index.html">Overview</a>
         <a href="quickstart.html">Quickstart</a>
+        <a href="raft-protocol.html">Raft guide</a>
         <a href="architecture.html">Architecture</a>
         <a href="features.html">Features</a>
         <a href="roadmap.html">Roadmap</a>
@@ -33,6 +34,7 @@
         </header>
         <h2 id="overview">Overview</h2>
 <p>The library separates <strong>consensus core</strong> (Raft algorithm), <strong>persistence</strong>, <strong>networking</strong>, and <strong>application state machine</strong>. Host applications reference <code>SparkRaftSharp</code> and supply transport and optional custom stores.</p>
+<p>For a full walkthrough of Raft behavior and how each RPC maps to services in this repo, see the <a href="raft-protocol.html">Raft protocol guide</a>.</p>
 <h2 id="layers">Layers</h2>
 <h3 id="public-api">Public API</h3>
 <ul>

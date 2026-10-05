@@ -1,11 +1,13 @@
 ---
 title: Architecture
-order: 2
+order: 3
 ---
 
 ## Overview
 
 The library separates **consensus core** (Raft algorithm), **persistence**, **networking**, and **application state machine**. Host applications reference `SparkRaftSharp` and supply transport and optional custom stores.
+
+For a full walkthrough of Raft behavior and how each RPC maps to services in this repo, see the [Raft protocol guide](raft-protocol.md).
 
 ## Layers
 

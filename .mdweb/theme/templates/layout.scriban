@@ -19,6 +19,7 @@
       <nav class="topbar-nav" aria-label="Primary">
         <a href="{{ home_url }}">Overview</a>
         <a href="{{ rel_prefix }}quickstart.html">Quickstart</a>
+        <a href="{{ rel_prefix }}raft-protocol.html">Raft guide</a>
         <a href="{{ rel_prefix }}architecture.html">Architecture</a>
         <a href="{{ rel_prefix }}features.html">Features</a>
         <a href="{{ rel_prefix }}roadmap.html">Roadmap</a>

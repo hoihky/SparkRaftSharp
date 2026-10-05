@@ -19,6 +19,7 @@ order: 0
     </ul>
     <div class="hero-links">
       <a href="quickstart.html">Quickstart</a>
+      <a href="raft-protocol.html">Raft guide</a>
       <a href="architecture.html">Architecture</a>
       <a href="simple-cluster.html">Cluster demo</a>
     </div>
@@ -57,6 +58,7 @@ order: 0
     </thead>
     <tbody>
       <tr><td><a href="quickstart.html">Quickstart</a></td><td>Reference the package and wire an in-process cluster</td></tr>
+      <tr><td><a href="raft-protocol.html">Raft protocol guide</a></td><td>Consensus concepts and SparkRaftSharp components</td></tr>
       <tr><td><a href="architecture.html">Architecture</a></td><td>Layers, patterns, and extension points</td></tr>
       <tr><td><a href="features.html">Features</a></td><td>Capability matrix and milestones</td></tr>
       <tr><td><a href="roadmap.html">Roadmap</a></td><td>Delivery phases and status</td></tr>
