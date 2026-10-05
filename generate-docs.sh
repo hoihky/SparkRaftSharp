@@ -12,7 +12,7 @@ if [[ ! -f "${MDWEB_CLI}/MDWeb.Cli.csproj" ]]; then
 fi
 
 dotnet run --project "${MDWEB_CLI}" \
-  --source "${PUBLISH_DIR}" \
+  --source "${PUBLISH_DIR}/content" \
   --output "${BUILD_DIR}" \
   --theme "${REPO_ROOT}/.mdweb/theme" \
   --title "SparkRaftSharp" \

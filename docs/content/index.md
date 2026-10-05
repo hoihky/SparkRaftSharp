@@ -1,37 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Overview · SparkRaftSharp</title>
-  <meta name="description" content="Raft consensus library for .NET clustered applications.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/portfolio.css">
-  <link rel="stylesheet" href="assets/css/sparkraft-docs.css">
-  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
-</head>
-<body>
-  <div class="site">
-    <header class="topbar">
-      <a href="index.html" class="brand">SparkRaftSharp</a>
-      <nav class="topbar-nav" aria-label="Primary">
-        <a href="index.html">Overview</a>
-        <a href="quickstart.html">Quickstart</a>
-        <a href="architecture.html">Architecture</a>
-        <a href="features.html">Features</a>
-        <a href="roadmap.html">Roadmap</a>
-        <a href="simple-cluster.html">Demo</a>
-      </nav>
-    </header>
+---
+title: Overview
+order: 0
+---
 
-    <main class="portfolio-layout">
-      <div class="portfolio-main doc-body">
-        <header class="doc-header">
-          <h1>Overview</h1>
-        </header>
-        <section class="hero" id="top">
+<section class="hero" id="top">
   <div class="hero-mark" aria-hidden="true">SR</div>
   <div class="hero-text">
     <h1>SparkRaftSharp</h1>
@@ -52,11 +24,13 @@
     </div>
   </div>
 </section>
+
 <p class="disclaimer">
   <strong>Disclaimer:</strong> This project is an experimental, work-in-progress prototype built with the help of
-  “vibe coding”. Things will break. Features are currently missing, and the build scripts might not work at all.
+  &ldquo;vibe coding&rdquo;. Things will break. Features are currently missing, and the build scripts might not work at all.
   Please be aware that it may not be stable enough for production use now.
 </p>
+
 <section id="highlights">
   <h2 class="section-title">What you get</h2>
   <div class="pillar-grid">
@@ -74,6 +48,7 @@
     </article>
   </div>
 </section>
+
 <section id="docs-map">
   <h2 class="section-title">Documentation map</h2>
   <table>
@@ -89,6 +64,7 @@
     </tbody>
   </table>
 </section>
+
 <section id="status">
   <h2 class="section-title">Status</h2>
   <p>
@@ -96,17 +72,3 @@
     See the <a href="roadmap.html">roadmap</a> for Phase 7 plans.
   </p>
 </section>
-
-        <footer class="doc-footer">
-          <p>SparkRaftSharp documentation — generated with MDWeb.</p>
-        </footer>
-      </div>
-
-      
-    </main>
-  </div>
-  <script src="assets/vendor/mermaid.min.js"></script>
-  <script src="assets/vendor/highlight.min.js"></script>
-  <script src="assets/js/site.js"></script>
-</body>
-</html>

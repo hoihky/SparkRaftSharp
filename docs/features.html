@@ -8,13 +8,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/portfolio.css">
+  <link rel="stylesheet" href="assets/css/sparkraft-docs.css">
   <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
 </head>
 <body>
   <div class="site">
     <header class="topbar">
-      <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Toggle navigation">☰</button>
       <a href="index.html" class="brand">SparkRaftSharp</a>
       <nav class="topbar-nav" aria-label="Primary">
         <a href="index.html">Overview</a>
@@ -24,68 +24,14 @@
         <a href="roadmap.html">Roadmap</a>
         <a href="simple-cluster.html">Demo</a>
       </nav>
-      <div class="search-wrap">
-        <input type="search" id="search" placeholder="Search docs…" autocomplete="off">
-      </div>
     </header>
 
-    <div class="layout">
-      <aside class="sidebar" id="sidebar">
-        <nav class="nav" aria-label="Documentation">
-          <ul class="nav-list">
-            
-                        <li class="nav-item depth-0">
-                          
-                            <a href="index.html" class="nav-link">Overview</a>
-                            
-                        </li>
-                        
-                        <li class="nav-item depth-0">
-                          
-                            <span class="nav-group">html</span>
-                            
-                        </li>
-                        
-                        <li class="nav-item depth-0">
-                          
-                            <a href="quickstart.html" class="nav-link">Quickstart</a>
-                            
-                        </li>
-                        
-                        <li class="nav-item depth-0">
-                          
-                            <a href="architecture.html" class="nav-link">Architecture</a>
-                            
-                        </li>
-                        
-                        <li class="nav-item depth-0 is-active">
-                          
-                            <a href="features.html" class="nav-link">Features</a>
-                            
-                        </li>
-                        
-                        <li class="nav-item depth-0">
-                          
-                            <a href="roadmap.html" class="nav-link">Roadmap</a>
-                            
-                        </li>
-                        
-                        <li class="nav-item depth-0">
-                          
-                            <a href="simple-cluster.html" class="nav-link">SimpleCluster demo</a>
-                            
-                        </li>
-                        
-          </ul>
-        </nav>
-      </aside>
-
-      <main class="content">
-        <article class="doc">
-          <header class="doc-header">
-            <h1>Features</h1>
-          </header>
-          <div class="doc-body"><h2 id="goals">Goals</h2>
+    <main class="portfolio-layout">
+      <div class="portfolio-main doc-body">
+        <header class="doc-header">
+          <h1>Features</h1>
+        </header>
+        <h2 id="goals">Goals</h2>
 <p>A composable .NET Raft library for strongly consistent clustered applications.</p>
 <h2 id="core-protocol-p0">Core protocol (P0)</h2>
 <p>Leader election, log replication, safety properties, heartbeats, commitment, state machine apply.</p>
@@ -98,42 +44,41 @@
 <li><strong>v0.1</strong> — MVP cluster, in-proc transport, propose/apply</li>
 <li><strong>v0.2+</strong> — snapshots, pre-vote, membership (planned)</li>
 </ul>
-</div>
-          <footer class="doc-footer">
-            <p>SparkRaftSharp documentation — generated with MDWeb.</p>
-          </footer>
-        </article>
 
-        
-                <aside class="toc" aria-label="On this page">
-                  <p class="toc-title">On this page</p>
-                  <ul>
-                    
-                        <li class="toc-h2">
-                          <a href="#goals">Goals</a>
-                        </li>
-                        
-                        <li class="toc-h2">
-                          <a href="#core-protocol-p0">Core protocol (P0)</a>
-                        </li>
-                        
-                        <li class="toc-h2">
-                          <a href="#developer-experience-p0p1">Developer experience (P0–P1)</a>
-                        </li>
-                        
-                        <li class="toc-h2">
-                          <a href="#extensibility">Extensibility</a>
-                        </li>
-                        
-                        <li class="toc-h2">
-                          <a href="#milestones">Milestones</a>
-                        </li>
-                        
-                  </ul>
-                </aside>
+        <footer class="doc-footer">
+          <p>SparkRaftSharp documentation — generated with MDWeb.</p>
+        </footer>
+      </div>
+
+      
+            <aside class="toc" aria-label="On this page">
+              <p class="toc-title">On this page</p>
+              <ul>
                 
-      </main>
-    </div>
+                    <li class="toc-h2">
+                      <a href="#goals">Goals</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#core-protocol-p0">Core protocol (P0)</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#developer-experience-p0p1">Developer experience (P0–P1)</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#extensibility">Extensibility</a>
+                    </li>
+                    
+                    <li class="toc-h2">
+                      <a href="#milestones">Milestones</a>
+                    </li>
+                    
+              </ul>
+            </aside>
+            
+    </main>
   </div>
   <script src="assets/vendor/mermaid.min.js"></script>
   <script src="assets/vendor/highlight.min.js"></script>
