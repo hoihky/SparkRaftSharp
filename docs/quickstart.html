@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quickstart · SparkRaftSharp</title>
+  <meta name="description" content="Raft consensus library for .NET clustered applications.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Toggle navigation">☰</button>
+      <a href="index.html" class="brand">SparkRaftSharp</a>
+      <nav class="topbar-nav" aria-label="Primary">
+        <a href="index.html">Overview</a>
+        <a href="quickstart.html">Quickstart</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="features.html">Features</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="simple-cluster.html">Demo</a>
+      </nav>
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search docs…" autocomplete="off">
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <nav class="nav" aria-label="Documentation">
+          <ul class="nav-list">
+            
+                        <li class="nav-item depth-0">
+                          
+                            <a href="index.html" class="nav-link">Overview</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <span class="nav-group">html</span>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0 is-active">
+                          
+                            <a href="quickstart.html" class="nav-link">Quickstart</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="architecture.html" class="nav-link">Architecture</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="features.html" class="nav-link">Features</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="roadmap.html" class="nav-link">Roadmap</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="simple-cluster.html" class="nav-link">SimpleCluster demo</a>
+                            
+                        </li>
+                        
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <article class="doc">
+          <header class="doc-header">
+            <h1>Quickstart</h1>
+          </header>
+          <div class="doc-body"><h2 id="reference-the-library">Reference the library</h2>
+<pre><code class="language-bash">dotnet add package SparkRaftSharp
+# or project reference:
+dotnet add reference path/to/SparkRaftSharp.csproj
+</code></pre>
+<h2 id="minimal-in-process-cluster">Minimal in-process cluster</h2>
+<pre><code class="language-csharp">using System.Text;
+using SparkRaftSharp;
+using SparkRaftSharp.Models;
+using SparkRaftSharp.Primitives;
+using SparkRaftSharp.StateMachine;
+using SparkRaftSharp.Transport;
+
+var transport = new InProcessRaftTransport();
+var peers = new[]
+{
+    new RaftPeer(new NodeId("a"), "a"),
+    new RaftPeer(new NodeId("b"), "b"),
+    new RaftPeer(new NodeId("c"), "c"),
+};
+
+IRaftNode CreateNode(NodeId id, IRaftStateMachine machine) =&gt;
+    new RaftNodeBuilder()
+        .WithCluster(new ClusterConfiguration(id, peers))
+        .WithTransport(transport)
+        .WithStateMachine(machine)
+        .Build();
+
+var nodes = new[] { CreateNode(peers[0].Id, machineA), /* ... */ };
+foreach (var n in nodes)
+    await n.StartAsync();
+
+var leader = /* wait until one node reports RaftRole.Leader */;
+var index = await leader.ProposeAsync(Encoding.UTF8.GetBytes("hello"));
+</code></pre>
+<h2 id="production-hosting">Production hosting</h2>
+<ol>
+<li>Implement <code>IRaftTransport</code> over your RPC layer (gRPC, TCP, etc.).</li>
+<li>Optionally replace <code>InMemoryLogStore</code> / <code>InMemoryStateStore</code> with durable implementations.</li>
+<li>Implement <code>IRaftStateMachine</code> to apply committed commands to your domain model.</li>
+<li>Expose <code>NotLeaderException.KnownLeader</code> to clients for redirect/retry.</li>
+</ol>
+<p>See <a href="architecture.html">architecture.md</a> for extension points.</p>
+<h2 id="clustered-server-demo">Clustered server demo</h2>
+<pre><code class="language-bash">dotnet run --project samples/SimpleCluster/SimpleCluster.csproj
+</code></pre>
+<p>Then use <code>nc 127.0.0.1 7001</code> with <code>SET</code>, <code>GET</code>, and <code>STATUS</code>. See <a href="simple-cluster.html">simple-cluster.md</a>.</p>
+</div>
+          <footer class="doc-footer">
+            <p>SparkRaftSharp documentation — generated with MDWeb.</p>
+          </footer>
+        </article>
+
+        
+                <aside class="toc" aria-label="On this page">
+                  <p class="toc-title">On this page</p>
+                  <ul>
+                    
+                        <li class="toc-h2">
+                          <a href="#reference-the-library">Reference the library</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#minimal-in-process-cluster">Minimal in-process cluster</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#production-hosting">Production hosting</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#clustered-server-demo">Clustered server demo</a>
+                        </li>
+                        
+                  </ul>
+                </aside>
+                
+      </main>
+    </div>
+  </div>
+  <script src="assets/vendor/mermaid.min.js"></script>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

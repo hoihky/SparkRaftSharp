@@ -52,4 +52,4 @@ Current milestone: **v0.1** — elections, replication, snapshots (install path)
 
 ## HTML site
 
-Run `./generate-docs.sh` from the repository root (requires MDWeb as a sibling clone). Markdown sources live in this folder; the MDWeb theme is under `.mdweb/theme`. Output is written to `docs/html/`.
+Run `./generate-docs.sh` from the repository root (requires MDWeb as a sibling clone). That writes a staging build to `docs/html/`, copies HTML and `assets/` into this folder, and updates `docs/.nojekyll` so GitHub Pages serves the static site instead of Jekyll. **Commit** `.nojekyll`, `*.html`, and `assets/` after regenerating so [the project site](https://hoihky.github.io/SparkRaftSharp/) picks up the theme.

@@ -27,7 +27,7 @@ coverage/
 # Demo cluster runtime data
 data/
 
-# Generated static HTML (run ./generate-docs.sh)
+# MDWeb staging output (published copies land in docs/ for GitHub Pages)
 docs/html/
 
 # Local tooling
